@@ -821,15 +821,14 @@ class BumpHunter():
         plt.ylabel('local p-value',size='large')
         plt.yscale('log')
         
-        if(filename is None):
-            plt.show()
-        else:
+        plt.show()
+        if filename is not None:
             plt.savefig(filename,bbox_inches='tight')
             plt.close(F)
         return
     
     # Plot the data and bakground histograms with the bump found by BumpHunter highlighted
-    def PlotBump(self,data,bkg,is_hist=False,filename=None):
+    def PlotBump(self,data,bkg,is_hist=False,filename=None,title=None):
         '''
         Plot the data and bakground histograms with the bump found by BumpHunter highlighted.
         
@@ -878,40 +877,61 @@ class BumpHunter():
         gs = grd.GridSpec(2, 1, height_ratios=[4, 1])
         
         pl1 = plt.subplot(gs[0])
-        plt.title('Distributions with bump')
         
         if(is_hist is False):
-            plt.hist(bkg,bins=self.bins,histtype='step',range=self.rang,weights=self.weights,label='background',linewidth=2,color='red')
+            plt.hist(bkg,bins=self.bins,histtype='step',
+                     range=self.rang,weights=self.weights,label='Background',
+                     linewidth=2,color='navy')
             plt.errorbar(0.5*(H[1][1:]+H[1][:-1]),H[0],
-                         xerr=(H[1][1]-H[1][0])/2,yerr=np.sqrt(H[0]),
-                         ls='',color='blue',label='data')
+                         marker='o',
+                         yerr=np.sqrt(H[0]),
+                         ls='',color='black',label='Data')
         else:
-            plt.hist(self.bins[:-1],bins=self.bins,histtype='step',range=self.rang,weights=Hbkg,label='background',linewidth=2,color='red')
-            plt.errorbar(0.5*(H[1][1:]+H[1][:-1]),H[0],
-                         xerr=(H[1][1]-H[1][0])/2,yerr=np.sqrt(H[0]),
-                         ls='',color='blue',label='data')
+            plt.hist(self.bins[:-1],
+                     bins=self.bins,histtype='step',
+                     range=self.rang,weights=Hbkg,
+                     label='Background',linewidth=2,color='navy')
+            plt.errorbar(0.5*(H[1][1:]+H[1][:-1]),H[0],                        
+                         marker='o',
+                         yerr=np.sqrt(H[0]),
+                         ls='',color='black',label='Data')
+            
+        plt.ylabel('Events',size='large')
         
-        plt.plot(np.full(2,Bmin),np.array([0,H[0][self.min_loc_ar[0]]]),'r--',label=('BUMP'))
-        plt.plot(np.full(2,Bmax),np.array([0,H[0][self.min_loc_ar[0]+self.min_width_ar[0]]]),'r--')
-        plt.legend(fontsize='large')
+        plt.plot(np.full(2,Bmin),np.array([0,Hbkg[self.min_loc_ar[0]]]),'r--',color='red',label=('Most signif. window'))
+        plt.plot(np.full(2,Bmax),np.array([0,Hbkg[self.min_loc_ar[0]+self.min_width_ar[0]]]),'r--', color='red')
+        if title is not None:
+            plt.legend(fontsize='large',loc='upper right' ,title=title)
+        else:
+            plt.legend(fontsize='large',loc='upper right')
         plt.yscale('log')
         if self.rang!=None:
             plt.xlim(self.rang)
+        plt.ylim(0.5*min(H[0]),3*max(H[0]))
         plt.tight_layout()
         
         plt.subplot(gs[1],sharex=pl1)
-        plt.hist(H[1][:-1],bins=H[1],range=self.rang,weights=sig)
-        plt.plot(np.full(2,Bmin),np.array([sig.min(),sig.max()]),'r--',linewidth=2)
-        plt.plot(np.full(2,Bmax),np.array([sig.min(),sig.max()]),'r--',linewidth=2)
-        plt.yticks(np.arange(np.round(sig.min()),np.round(sig.max())+1,step=1))
-        plt.ylabel('significance',size='large')
+        plt.hist(H[1][:-1],bins=H[1],range=self.rang,weights=sig,color='cornflowerblue')
+        plt.plot(np.full(2,Bmin),np.array([np.round(sig.min())-0.5,np.round(sig.max())+0.5]),'r--',linewidth=2)
+        plt.plot(np.full(2,Bmax),np.array([np.round(sig.min())-0.5,np.round(sig.max())+0.5]),'r--',linewidth=2)
+        if self.rang!=None:
+            plt.plot(self.rang, [0, 0], '-.', linewidth=2., color='gray')
+
+        if np.round(sig.max()) > 4:
+            plt.yticks(np.arange(np.round(sig.min()),np.round(sig.max())+1,step=2))
+        else:         
+            plt.yticks(np.arange(np.round(sig.min()),np.round(sig.max())+1,step=1))
+        plt.ylabel('Signif.',size='large')
+        plt.xlabel(r'$m_{jj}$ [GeV]',size='large')
+        plt.ylim(np.round(sig.min())-0.5,np.round(sig.max())+0.5)
         
         # Check if the plot should be saved or just displayed
-        if(filename is None):
+        if filename is not None:
+            plt.savefig(filename,bboxf_inches='tight')
             plt.show()
-        else:
-            plt.savefig(filename,bbox_inches='tight')
             plt.close(F)
+        else:
+            plt.show()
         
         return
     
@@ -941,11 +961,12 @@ class BumpHunter():
         plt.yscale('log')
         
         # Check if the plot should be saved or just displayed
-        if(filename is None):
-            plt.show()
-        else:
+        if filename is not None:
             plt.savefig(filename,bbox_inches='tight')
+            plt.show()
             plt.close(F)
+        else:
+            plt.show()
         
         return
     
